@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # =========================================================
-# MT25074 - Part C: Execution and Gnuplot
+# MT25074 - Part C: Verified Execution & Gnuplot
 # =========================================================
 
 OUTPUT_FILE="MT25074_Part_C_CSV.csv"
@@ -25,7 +25,7 @@ check_tool "bc" "bc"
 echo "All dependencies found."
 echo "-----------------------------------------------------"
 
-# 1. CLEAN and COMPILE
+# 1. CLEANUP & COMPILE
 rm -f $OUTPUT_FILE
 make clean > /dev/null 2>&1
 make > /dev/null 2>&1
@@ -38,8 +38,8 @@ fi
 echo "Step 1: Measuring Resource Usage (Pinned to Core $PIN_CORE)"
 echo "-----------------------------------------------------"
 
-# 2. HEADER
-echo "Program+Function CPU% Mem IO" | tee $OUTPUT_FILE
+# 2. HEADER (Updated to use Commas)
+echo "Program+Function,CPU,Mem,IO" | tee $OUTPUT_FILE
 
 measure_stats() {
     prog_cmd=$1
@@ -88,7 +88,8 @@ measure_stats() {
     avg_mem=$(echo "scale=2; $total_mem / $samples" | bc)
     avg_io=$(echo "scale=2; $total_io / $samples" | bc)
 
-    echo "$label+$task $avg_cpu $avg_mem $avg_io" | tee -a $OUTPUT_FILE
+    # OUTPUT (Updated to use Commas)
+    echo "$label+$task,$avg_cpu,$avg_mem,$avg_io" | tee -a $OUTPUT_FILE
 }
 
 # 3. RUN EXPERIMENTS
@@ -104,27 +105,33 @@ echo "-----------------------------------------------------"
 echo "Data Collection Complete!"
 
 # =========================================================
-# STEP 4: GENERATE PLOTS using GNUPLOT
+# STEP 4: GENERATE PLOTS (GNUPLOT)
 # =========================================================
 echo "Step 2: Generating Plots using Gnuplot..."
 
-# Prepare Data
-p_cpu=$(grep "Process_A+cpu" $OUTPUT_FILE | awk '{print $2}')
-t_cpu=$(grep "Thread_B+cpu" $OUTPUT_FILE | awk '{print $2}')
+if ! command -v gnuplot &> /dev/null; then
+    echo "Error: Gnuplot not found. Install: sudo apt install gnuplot"
+    exit 1
+fi
+
+# A. Prepare Data for Bar Charts
+# Updated awk to use comma delimiter (-F,)
+p_cpu=$(grep "Process_A+cpu" $OUTPUT_FILE | awk -F, '{print $2}')
+t_cpu=$(grep "Thread_B+cpu" $OUTPUT_FILE | awk -F, '{print $2}')
 echo "CPU $p_cpu $t_cpu" > plot_cpu.dat
 
-p_mem=$(grep "Process_A+mem" $OUTPUT_FILE | awk '{print $3}')
-t_mem=$(grep "Thread_B+mem" $OUTPUT_FILE | awk '{print $3}')
+p_mem=$(grep "Process_A+mem" $OUTPUT_FILE | awk -F, '{print $3}')
+t_mem=$(grep "Thread_B+mem" $OUTPUT_FILE | awk -F, '{print $3}')
 echo "Mem $p_mem $t_mem" > plot_mem.dat
 
-p_io=$(grep "Process_A+io" $OUTPUT_FILE | awk '{print $4}')
-t_io=$(grep "Thread_B+io" $OUTPUT_FILE | awk '{print $4}')
+p_io=$(grep "Process_A+io" $OUTPUT_FILE | awk -F, '{print $4}')
+t_io=$(grep "Thread_B+io" $OUTPUT_FILE | awk -F, '{print $4}')
 echo "IO $p_io $t_io" > plot_io.dat
 
-# Run Gnuplot
+# B. Run Gnuplot Script
 gnuplot << EOF
 set terminal pngcairo size 1800,600 enhanced font 'Verdana,10'
-set output 'MT25074_Part_C_Plot.png'
+set output 'MT25074_PartC_Plot.png'
 set multiplot layout 1,3 title "Part C: Resource Usage (Generated via Bash/Gnuplot)" font ",14"
 
 # Common Settings
@@ -159,6 +166,8 @@ plot 'plot_io.dat' using 2:xtic(1) title "Processes" lc rgb "blue", \
 unset multiplot
 EOF
 
+# Cleanup Temp Files
 rm plot_cpu.dat plot_mem.dat plot_io.dat
-echo "Success! Generated: MT25074_Part_C_Plot.png"
+
+echo "Success! Generated: MT25074_PartC_Plot.png"
 echo "-----------------------------------------------------"
