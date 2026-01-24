@@ -131,7 +131,7 @@ echo "IO $p_io $t_io" > plot_io.dat
 # B. Run Gnuplot Script
 gnuplot << EOF
 set terminal pngcairo size 1800,600 enhanced font 'Verdana,10'
-set output 'MT25074_PartC_Plot.png'
+set output 'MT25074_Part_C_Plot.png'
 set multiplot layout 1,3 title "Part C: Resource Usage (Generated via Bash/Gnuplot)" font ",14"
 
 # Common Settings
@@ -169,5 +169,5 @@ EOF
 # Cleanup Temp Files
 rm plot_cpu.dat plot_mem.dat plot_io.dat
 
-echo "Success! Generated: MT25074_PartC_Plot.png"
+echo "Success! Generated: MT25074_Part_C_Plot.png"
 echo "-----------------------------------------------------"
